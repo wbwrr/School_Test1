@@ -1,4 +1,4 @@
-import Foundation
+import UIKit
 
 class Creature {
     var attack: Int
@@ -27,7 +27,7 @@ class Creature {
 class Player: Creature {
     var maxHealth: Int
 
-    init(attack: Int, defense: Int, health: Int) {
+    override init(attack: Int, defense: Int, health: Int) {
         self.maxHealth = health
         super.init(attack: attack, defense: defense, health: health)
     }
@@ -46,17 +46,23 @@ class Player: Creature {
             fatalError("Неверное значение health.")
         }
 
-        let amount = (maxHealth - health < 0.3 * Double(maxHealth)) ? maxHealth - health : 0.3 * Double(maxHealth)
-        health += Int(amount)
+        let amount: Int
+        if Double(maxHealth - health) < 0.3 * Double(maxHealth) {
+            amount = maxHealth - health
+        } else {
+            amount = Int(0.3 * Double(maxHealth))
+        }
+
+        health += amount
         print("Игрок исцелился на \(amount) здоровья. Текущее здоровье: \(health)")
     }
 
     func attackCreature(_ creature: Creature) {
-        guard let monster = creature as? Monster else {
+        guard creature is Monster else {
             fatalError("Неверное значение объекта существа.")
         }
 
-        let attackModifier = attack - monster.defense + 1
+        let attackModifier = attack - creature.defense + 1
         var success = false
 
         if attackModifier > 0 {
@@ -81,15 +87,15 @@ class Player: Creature {
 }
 
 class Monster: Creature {
-    var damageRange: (Int, Int)
+    var damageRange: ClosedRange<Int>
 
-    init(attack: Int, defense: Int, health: Int, damageRange: (Int, Int)) {
+    init(attack: Int, defense: Int, health: Int, damageRange: ClosedRange<Int>) {
         self.damageRange = damageRange
         super.init(attack: attack, defense: defense, health: health)
     }
 
     func attackCreature(_ creature: Creature) {
-        let damage = Int.random(in: damageRange.0...damageRange.1)
+        let damage = Int.random(in: damageRange)
         creature.takeDamage(damage: damage)
         print("Монстр атаковал на \(damage) урона.")
     }
@@ -97,8 +103,12 @@ class Monster: Creature {
 
 // Пример использования классов
 let player = Player(attack: 10, defense: 8, health: 100)
-let monster = Monster(attack: 12, defense: 6, health: 50, damageRange: (1, 6))
+let monster = Monster(attack: 12, defense: 6, health: 50, damageRange: 1...6)
 
+player.attackCreature(monster)
+monster.attackCreature(player)
+
+player.heal()
 player.attackCreature(monster)
 monster.attackCreature(player)
 
